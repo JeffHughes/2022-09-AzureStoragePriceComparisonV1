@@ -1,11 +1,8 @@
 ﻿// See https://aka.ms/new-console-template for more information
-
-using System.Runtime.InteropServices.ComTypes;
-using System.Security.Cryptography.X509Certificates;
+ 
 using System.Text;
 using System.Text.Json;
-using Flurl.Http;
-using Flurl.Util;
+using Flurl.Http; 
 
 Console.WriteLine("Azure Storage Price Comparison");
 var pageSize = 100;
@@ -17,8 +14,7 @@ var mainurl =
 Console.WriteLine("fetching 0-100");
 
 var results = await mainurl.GetJsonAsync<pricesObject>();
-
-
+ 
 var items = new List<Item>();
 items.AddRange(results.Items);
 
@@ -39,8 +35,7 @@ var pricesAndRegions = orderedItems.Select(x => new { x.retailPrice, x.armRegion
 var groupedPricing = pricesAndRegions
     .GroupBy(x => x.retailPrice)
     .ToDictionary(g => g.Key, g => g.ToList()); ;
-
-
+ 
 var sb = new StringBuilder(); 
 
 var existingRegions = new List<string>();
@@ -66,8 +61,7 @@ foreach (var key in groupedPricing.Keys)
 Console.WriteLine(sb);
 
 var orderedItemsJson = JsonSerializer.Serialize(orderedItems);
-File.WriteAllText("d://temp//AzureStoragePricing-fullData.json", orderedItemsJson);
- 
+File.WriteAllText("d://temp//AzureStoragePricing-fullData.json", orderedItemsJson); 
 File.WriteAllText("d://temp//AzureStorage-CheapestPricingByRegion.json", sb.ToString());
 
 
