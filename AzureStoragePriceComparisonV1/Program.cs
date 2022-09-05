@@ -1,8 +1,8 @@
 ﻿// See https://aka.ms/new-console-template for more information
- 
+
 using System.Text;
 using System.Text.Json;
-using Flurl.Http; 
+using Flurl.Http;
 
 Console.WriteLine("Azure Storage Price Comparison");
 var pageSize = 100;
@@ -11,10 +11,9 @@ var skip = 100;
 var mainurl =
 "https://prices.azure.com/api/retail/prices?$filter=productName%20eq%20%27Blob%20Storage%27%20and%20skuName%20eq%20%27Hot%20LRS%27%20and%20unitOfMeasure%20eq%20%271%20GB/Month%27";
 
-Console.WriteLine("fetching 0-100");
-
+Console.WriteLine("fetching 0-100"); 
 var results = await mainurl.GetJsonAsync<pricesObject>();
- 
+
 var items = new List<Item>();
 items.AddRange(results.Items);
 
@@ -30,14 +29,13 @@ while (results.Count == pageSize)
 Console.WriteLine(items.Count + " downloaded");
 
 var orderedItems = items.OrderBy(x => x.retailPrice);
- 
+
 var pricesAndRegions = orderedItems.Select(x => new { x.retailPrice, x.armRegionName });
 var groupedPricing = pricesAndRegions
     .GroupBy(x => x.retailPrice)
     .ToDictionary(g => g.Key, g => g.ToList()); ;
- 
-var sb = new StringBuilder(); 
 
+var sb = new StringBuilder();
 var existingRegions = new List<string>();
 
 foreach (var key in groupedPricing.Keys)
@@ -45,23 +43,22 @@ foreach (var key in groupedPricing.Keys)
     var regions = groupedPricing[key]
         .Select(x => x.armRegionName);
 
-    var newRegions = regions.Where(x => existingRegions.All(y => y != x));
+    var newRegions = regions
+        .Where(x => existingRegions.All(y => y != x))
+        .OrderBy(x => x).ToList();
 
     if (newRegions.Any())
     {
-        newRegions = newRegions.OrderBy(x => x).ToList();
-        existingRegions.AddRange(newRegions!);
-
-        var regionsJson = JsonSerializer.Serialize(newRegions);
-        sb.Append(key.ToString("0.000000") + " " + newRegions.Count().ToString("00") + " region" + (newRegions.Count() == 1 ? "  " : "s "));
-        sb.AppendLine(regionsJson);
+        existingRegions.AddRange(newRegions!); 
+        sb.AppendLine(key.ToString("0.000000") + " " + newRegions.Count().ToString("00") +
+                      " region" + (newRegions.Count() == 1 ? "  " : "s ") +
+                      JsonSerializer.Serialize(newRegions));
     }
 }
 
 Console.WriteLine(sb);
 
-var orderedItemsJson = JsonSerializer.Serialize(orderedItems);
-File.WriteAllText("d://temp//AzureStoragePricing-fullData.json", orderedItemsJson); 
+File.WriteAllText("d://temp//AzureStoragePricing-fullData.json", JsonSerializer.Serialize(orderedItems));
 File.WriteAllText("d://temp//AzureStorage-CheapestPricingByRegion.json", sb.ToString());
 
 
