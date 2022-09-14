@@ -57,7 +57,7 @@ foreach (var key in groupedPricingForRegions.Keys)
 Console.WriteLine(sb);
 
 File.WriteAllText("d://temp//AzureStoragePricing-fullData.json", JsonSerializer.Serialize(orderedItems));
-File.WriteAllText("d://temp//AzureStorage-CheapestPricingByRegion.json", sb.ToString());
+File.WriteAllText("d://temp//AzureStorage-CheapestPricingByRegion.txt", sb.ToString());
  
 public class pricesObject
 {
