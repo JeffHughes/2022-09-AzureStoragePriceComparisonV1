@@ -11,7 +11,7 @@ var skip = 100;
 var mainUrl =
 "https://prices.azure.com/api/retail/prices?$filter=productName%20eq%20%27Blob%20Storage%27%20and%20skuName%20eq%20%27Hot%20LRS%27%20and%20unitOfMeasure%20eq%20%271%20GB/Month%27";
 
-Console.WriteLine("fetching 0-100"); 
+Console.WriteLine("fetching 0-100");
 var results = await mainUrl.GetJsonAsync<pricesObject>();
 
 var items = new List<Item>();
@@ -29,8 +29,12 @@ while (results.Count == pageSize)
 Console.WriteLine(items.Count + " downloaded");
 
 var orderedItems = items.OrderBy(x => x.retailPrice);
- 
-var groupedPricingForRegions = 
+
+var lowestNonZeroRetailPrice = orderedItems.First(x => x.retailPrice > 0).retailPrice;
+
+
+
+var groupedPricingForRegions =
     orderedItems.Select(x => new { x.retailPrice, x.armRegionName })
     .GroupBy(x => x.retailPrice)
     .ToDictionary(g => g.Key, g => g.ToList()); ;
@@ -38,8 +42,11 @@ var groupedPricingForRegions =
 var sb = new StringBuilder();
 var existingRegions = new List<string>();
 
+
+
+
 foreach (var key in groupedPricingForRegions.Keys)
-{ 
+{
     var regions = groupedPricingForRegions[key]
         .Select(x => x.armRegionName)
         .Where(x => existingRegions.All(y => y != x))
@@ -47,18 +54,25 @@ foreach (var key in groupedPricingForRegions.Keys)
 
     if (regions.Any())
     {
-        existingRegions.AddRange(regions!); 
+        var percentDiff = ((key / lowestNonZeroRetailPrice) - 1);
+
+        var percentDiffStr = "(" +
+                             (percentDiff > 0 ? percentDiff.ToString("+#;-#;").Substring(0, 1) : "") +
+                             (percentDiff == 0 ? "=" : "") +
+                             percentDiff.ToString("0.00%").PadLeft(7) + ") ";
+
+        existingRegions.AddRange(regions!);
         sb.AppendLine(key.ToString("0.000000") + " " + regions.Count().ToString("00") +
                       " region" + (regions.Count() == 1 ? "  " : "s ") +
-                      JsonSerializer.Serialize(regions));
+                       percentDiffStr + JsonSerializer.Serialize(regions));
     }
 }
 
 Console.WriteLine(sb);
 
-File.WriteAllText("d://temp//AzureStoragePricing-fullData.json", JsonSerializer.Serialize(orderedItems));
-File.WriteAllText("d://temp//AzureStorage-CheapestPricingByRegion.json", sb.ToString());
- 
+File.WriteAllText("..//..//..//..//AzureStoragePricing-fullData.json", JsonSerializer.Serialize(orderedItems));
+File.WriteAllText("..//..//..//..//AzureStorage-CheapestPricingByRegion.txt", sb.ToString());
+
 public class pricesObject
 {
     //public string BillingCurrency { get; set; }
